@@ -12,10 +12,10 @@ export default function App() {
   useEffect(() => {
 
     async function dados(){
-      setUsuarios([]);
 
-      await firebase.database().ref('usuarios').on('child_added', (snapshot)=> {
 
+      await firebase.database().ref('usuarios').on('value', (snapshot)=> {
+        setUsuarios([]);
         snapshot.forEach((childItem)=> {
           let data = {
             key: childItem.key,
