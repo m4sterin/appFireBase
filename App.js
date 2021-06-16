@@ -1,99 +1,73 @@
-import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, Button, TextInput, FlatList, ActivityIndicator} from 'react-native';
-import firebase from './src/firebaseConnection';
-import Listagem from './src/components/Listagem';
+import React, { useState, useEffect } from "react";
+import {
+  StyleSheet,
+  Text,
+  View,
+  Button,
+  TextInput,
+  FlatList,
+  ActivityIndicator,
+} from "react-native";
+import firebase from "./src/firebaseConnection";
 
 export default function App() {
-  const [nome, setNome] = useState('');
-  const [cargo, setCargo] = useState('');
-  const [usuarios, setUsuarios] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-
-    async function dados(){
-
-
-      await firebase.database().ref('usuarios').on('value', (snapshot)=> {
-        setUsuarios([]);
-        snapshot.forEach((childItem)=> {
-          let data = {
-            key: childItem.key,
-            nome: childItem.val().nome,
-            cargo: childItem.val().cargo
-          };
-          setUsuarios(oldArray => [...oldArray, data].reverse());
-        })
-        setLoading(false)
-      })
-
-
-
-
-
-      // await firebase.database().ref('usuarios').child(3).update({
-      //   nome: 'Carlos',
-      //   cargo: 'Programador Pleno',
-      //   idade: '22',
-      //   sexo: 'M'
-      // });
-    }
-    dados();
-
-  }, []);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [user, setUser] = useState("");
+  const [nome, setNome] = useState("");
 
   async function cadastrar() {
-    if(nome !== '' & cargo !== ''){
-      let usuarios = await firebase.database().ref('usuarios');
-      let chave = usuarios.push().key;
-
-      usuarios.child(chave).set({
-        nome: nome,
-        cargo: cargo
+    await firebase
+      .auth()
+      .createUserWithEmailAndPassword(email, password)
+      .then((value) => {
+        firebase.database().ref("usuarios").child(value.user.uid).set({
+          nome: nome,
+        });
+        alert("Usuario cadastrado com sucesso" + value.user.email);
+        setEmail("");
+        setPassword("");
+        setNome("");
+      })
+      .catch((error) => {
+        alert("Algo deu errado");
+        return;
       });
-      alert('Usuario Cadastrado com sucesso!')
-      setCargo('');
-      setNome('');
-    }
-    else{
-      alert('Preencha o formulario');
-    }
+  }
+
+  async function logout() {
+    await firebase.auth().signOut();
+    setUser("");
+    alert("Deslogado com sucesso");
   }
 
   return (
     <View style={styles.container}>
       <Text style={styles.texto}>Nome:</Text>
       <TextInput
-      style={styles.input}
-      underlineColorAndroid='transpartent'
-      onChangeText={(texto) => setNome(texto)}
-      value={nome}
+        style={styles.input}
+        underlineColorAndroid="transpartent"
+        onChangeText={(texto) => setNome(texto)}
+        value={nome}
       />
 
-      <Text style={styles.texto}>Cargo:</Text>
+      <Text style={styles.texto}>E-mail:</Text>
       <TextInput
-      style={styles.input}
-      underlineColorAndroid='transpartent'
-      onChangeText={(texto) => setCargo(texto)}
-      value={cargo}
-      />
-      <Button
-      title='Novo Cadastro'
-      onPress={cadastrar}
+        style={styles.input}
+        underlineColorAndroid="transpartent"
+        onChangeText={(texto) => setEmail(texto)}
+        value={email}
       />
 
-    {loading ?
-    (
-      <ActivityIndicator color='#121212' size={45}/>
-    ):
-    (
-      <FlatList
-      keyExtractor={item => item.key}
-      data={usuarios}
-      renderItem={ ({item}) => ( <Listagem data={item} />)}
+      <Text style={styles.texto}>Password:</Text>
+      <TextInput
+        style={styles.input}
+        secureTextEntry={true}
+        underlineColorAndroid="transpartent"
+        onChangeText={(texto) => setPassword(texto)}
+        value={password}
       />
-    )
-  }
+      <Button title="Cadastrar" onPress={cadastrar} />
     </View>
   );
 }
@@ -101,17 +75,17 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    margin: 10
+    margin: 10,
   },
   texot: {
-    fontSize: 20
+    fontSize: 20,
   },
   input: {
     marginBottom: 10,
     padding: 10,
     borderWidth: 1,
-    borderColor: '#121212',
+    borderColor: "#121212",
     height: 45,
-    fontSize: 17
-  }
+    fontSize: 17,
+  },
 });
